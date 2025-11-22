@@ -10,55 +10,6 @@ const loginSchema = z.object({
 });
 
 // RADIUS server configuration
-const RADIUS_SERVER = "192.168.1.170";
-const RADIUS_PORT = 1812;
-const RADIUS_SECRET = "testing123"; // Replace with your actual RADIUS secret
-
-async function authenticateWithRadius(username: string, password: string): Promise<boolean> {
-  return new Promise((resolve, reject) => {
-    const radius = require('radius');
-    const client = dgram.createSocket("udp4");
-    
-    const packet = radius.encode({
-      code: "Access-Request",
-      secret: RADIUS_SECRET,
-      attributes: [
-        ["NAS-IP-Address", "127.0.0.1"],
-        ["User-Name", username],
-        ["User-Password", password],
-      ],
-    });
-
-    client.send(packet, 0, packet.length, RADIUS_PORT, RADIUS_SERVER, (err) => {
-      if (err) {
-        client.close();
-        reject(err);
-      }
-    });
-
-    client.on("message", (msg) => {
-      try {
-        const response = radius.decode({ packet: msg, secret: RADIUS_SECRET });
-        client.close();
-        resolve(response.code === "Access-Accept");
-      } catch (error) {
-        client.close();
-        reject(error);
-      }
-    });
-
-    client.on("error", (err) => {
-      client.close();
-      reject(err);
-    });
-
-    // Timeout after 5 seconds
-    setTimeout(() => {
-      client.close();
-      reject(new Error("RADIUS server timeout"));
-    }, 5000);
-  });
-}
 const RADIUS_CONFIG = {
   host: "192.168.1.170",
   port: 1812,
@@ -124,29 +75,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isAuthenticated = await authenticateWithRadius(username, password);
 
       if (isAuthenticated) {
-        res.json({ 
-          success: true, 
+        res.json({
+          success: true,
           message: "Access granted",
           sessionTimeout: 3600 // 1 hour in seconds
         });
       } else {
-        res.status(401).json({ 
-          success: false, 
-          message: "Access denied: Invalid credentials" 
+        res.status(401).json({
+          success: false,
+          message: "Access denied: Invalid credentials"
         });
       }
     } catch (error) {
       console.error("Authentication error:", error);
-      
+
       if (error instanceof z.ZodError) {
-        res.status(400).json({ 
-          success: false, 
-          message: "Invalid request format" 
+        res.status(400).json({
+          success: false,
+          message: "Invalid request format"
         });
       } else {
-        res.status(500).json({ 
-          success: false, 
-          message: "RADIUS server communication error. Please try again." 
+        res.status(500).json({
+          success: false,
+          message: "RADIUS server communication error. Please try again."
         });
       }
     }
