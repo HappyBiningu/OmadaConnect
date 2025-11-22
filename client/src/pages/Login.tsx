@@ -19,7 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Schema for login
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
@@ -28,7 +27,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function Login() {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,26 +44,30 @@ export default function Login() {
     setError(null);
 
     try {
-      // Real implementation: POST credentials to our local backend
-      // The backend will handle the RADIUS UDP communication
       const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Authentication failed");
-      }
+      const result = await response.json();
 
-      // Success: Redirect to dashboard
-      setLocation("/dashboard");
-    } catch (err) {
-      // If we are in mockup mode (no backend), this will fail.
-      // For now, we show the error message from the server or a connection error.
-      console.error("Login error:", err);
-      setError(err instanceof Error ? err.message : "Failed to connect to authentication server");
+      if (response.ok && result.success) {
+        // Store session timeout in localStorage
+        if (result.sessionTimeout) {
+          const expireTime = Math.floor(Date.now() / 1000) + result.sessionTimeout;
+          localStorage.setItem("wifi_timer", expireTime.toString());
+        }
+        // Redirect to dashboard
+        setLocation("/dashboard");
+      } else {
+        setError(result.message || "Authentication failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setError("Network error. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -72,9 +75,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen w-full bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(var(--primary),0.15)_0%,transparent_70%)]" />
-      <div className="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(180,100,255,0.15)_0%,transparent_70%)]" />
+      <div className="absolute top-0 left-0 w-full h-full opacity-20" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 400 400\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"noiseFilter\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"4\" /%3E%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23noiseFilter)\" /%3E%3C/svg%3E')" }} />
       
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -89,7 +91,7 @@ export default function Login() {
             </div>
             <CardTitle className="text-2xl font-heading tracking-wide">Network Access</CardTitle>
             <CardDescription>
-              Sign in to authenticate with local RADIUS server
+              Authenticate with RADIUS server (192.168.1.170)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -118,7 +120,13 @@ export default function Login() {
                       <FormControl>
                         <div className="relative">
                           <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input placeholder="Enter your ID" className="pl-9 bg-background/50 border-white/10 focus:border-primary/50" {...field} />
+                          <Input 
+                            placeholder="Enter your username" 
+                            className="pl-9 bg-background/50 border-white/10 focus:border-primary/50" 
+                            autoComplete="username"
+                            data-testid="input-username"
+                            {...field} 
+                          />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -134,7 +142,14 @@ export default function Login() {
                       <FormControl>
                         <div className="relative">
                           <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input type="password" placeholder="••••••••" className="pl-9 bg-background/50 border-white/10 focus:border-primary/50" {...field} />
+                          <Input 
+                            type="password" 
+                            placeholder="••••••••" 
+                            className="pl-9 bg-background/50 border-white/10 focus:border-primary/50" 
+                            autoComplete="current-password"
+                            data-testid="input-password"
+                            {...field} 
+                          />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -145,6 +160,7 @@ export default function Login() {
                   type="submit" 
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold tracking-wide mt-6"
                   disabled={isLoading}
+                  data-testid="button-login"
                 >
                   {isLoading ? (
                     <>
@@ -161,10 +177,13 @@ export default function Login() {
               </form>
             </Form>
           </CardContent>
-          <CardFooter className="flex justify-center border-t border-white/5 pt-6">
+          <CardFooter className="flex flex-col items-center border-t border-white/5 pt-6 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="font-mono">RADIUS: 192.168.1.170:1812</span>
+            </div>
             <p className="text-xs text-muted-foreground text-center">
-              Protected by secure RADIUS authentication (EAP-TTLS/PAP). <br/>
-              Unauthorized access is prohibited.
+              Session Duration: 1 Hour • Protected Authentication
             </p>
           </CardFooter>
         </Card>
