@@ -13,7 +13,7 @@ import {
   Cpu
 } from "lucide-react";
 
-export default function Home() {
+export default function Dashboard() {
   const hardwareServices = [
     {
       title: "iPhone Bypass & Unlock",
