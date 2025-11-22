@@ -91,7 +91,7 @@ export default function Login() {
             </div>
             <CardTitle className="text-2xl font-heading tracking-wide">Network Access</CardTitle>
             <CardDescription>
-              Authenticate with RADIUS server (192.168.1.170)
+              Authenticate with RADIUS server
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -178,12 +178,8 @@ export default function Login() {
             </Form>
           </CardContent>
           <CardFooter className="flex flex-col items-center border-t border-white/5 pt-6 space-y-2">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="font-mono">RADIUS: 192.168.1.170:1812</span>
-            </div>
             <p className="text-xs text-muted-foreground text-center">
-              Session Duration: 1 Hour • Protected Authentication
+              © {new Date().getFullYear()} Biningu Networks. All rights reserved.
             </p>
           </CardFooter>
         </Card>
