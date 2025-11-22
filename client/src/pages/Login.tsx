@@ -44,24 +44,30 @@ export default function Login() {
     setIsLoading(true);
     setError(null);
 
-    // SIMULATION of RADIUS Authentication
-    // In a real full-stack app, this would POST to a backend endpoint
-    // which would then send a UDP packet to the RADIUS server (192.168.1.170:1812)
-    
-    setTimeout(() => {
-      // Mock logic: For demo purposes, any non-empty credential "works" 
-      // unless specifically set to fail (e.g. user "fail")
-      if (data.username === "fail") {
-        setError("Access Rejected: Invalid credentials or account expired.");
-        setIsLoading(false);
-      } else {
-        // Success!
-        // In a real Omada External Portal, we would now redirect the user 
-        // to the Omada Controller's submission URL or trigger the authorization via API.
-        // Here, we just redirect to our "Success" dashboard.
-        setLocation("/dashboard");
+    try {
+      // Real implementation: POST credentials to our local backend
+      // The backend will handle the RADIUS UDP communication
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Authentication failed");
       }
-    }, 2000);
+
+      // Success: Redirect to dashboard
+      setLocation("/dashboard");
+    } catch (err) {
+      // If we are in mockup mode (no backend), this will fail.
+      // For now, we show the error message from the server or a connection error.
+      console.error("Login error:", err);
+      setError(err instanceof Error ? err.message : "Failed to connect to authentication server");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
