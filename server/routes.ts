@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import * as dgram from "dgram";
-import * as radius from "radius";
+import radius from "radius";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -24,7 +24,7 @@ async function authenticateWithRadius(username: string, password: string): Promi
       code: "Access-Request",
       secret: RADIUS_CONFIG.secret,
       attributes: [
-        ["NAS-IP-Address", "0.0.0.0"],
+        ["NAS-IP-Address", "127.0.0.1"],
         ["User-Name", username],
         ["User-Password", password],
       ],
