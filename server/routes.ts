@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import * as dgram from "dgram";
+import * as radius from "radius";
 import { z } from "zod";
 
 const loginSchema = z.object({
