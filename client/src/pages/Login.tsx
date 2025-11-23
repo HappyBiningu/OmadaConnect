@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Wifi, Globe, Shield, Zap } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { CountdownTimer } from "@/components/CountdownTimer";
 
 export default function Login() {
   return (
@@ -25,6 +26,9 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
+            <div className="w-full max-w-md mx-auto mb-8">
+              <CountdownTimer />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
